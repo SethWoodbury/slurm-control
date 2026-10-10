@@ -51,6 +51,17 @@ def test_broad_tail_walltime_fits_first_command_on_every_allowed_gpu(tmp_path):
         maximum = max(batch["tasks"][0]["runtime_estimates"].values())
         assert batch["walltime_seconds"] >= maximum + 240
         assert batch["walltime_seconds"] < 8 * 3600
+        assert batch["gres"] == "gpu:1"
+
+
+@pytest.mark.parametrize("gpus,gres", [(0, "gpu:large:1"), (1, "gpu:large:2")])
+def test_planner_rejects_gpu_request_accounting_mismatch_even_without_tasks(tmp_path, gpus, gres):
+    with ledger.locked_ledger(tmp_path) as db:
+        ledger.register(db, [], 10)
+        cfg = config()
+        cfg["pools"][0].update(gpus=gpus, gres=gres)
+        with pytest.raises(ValueError):
+            controller.preview_batches(db, cfg)
 
 
 def test_remaining_budget_can_fund_short_tail_instead_of_stranding_it(tmp_path):

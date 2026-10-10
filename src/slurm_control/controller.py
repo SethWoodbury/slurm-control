@@ -15,7 +15,7 @@ import hashlib
 from .common import atomic_json, digest, read_json, utcnow
 from . import ledger
 from .policy import recommend_memory, estimate_runtime
-from .slurm import Slurm, SlurmSubmissionRejected
+from .slurm import Slurm, SlurmSubmissionRejected, validated_gpu_request
 
 
 def load_config(path):
@@ -29,6 +29,8 @@ def load_config(path):
         raise ValueError("pools and workloads are required")
     if len({p["id"] for p in config["pools"]}) != len(config["pools"]):
         raise ValueError("Duplicate pool IDs")
+    for pool in config["pools"]:
+        validated_gpu_request(pool)
     return config
 
 
@@ -57,6 +59,8 @@ def memory_for(db, workload_key, settings, tasks, *, eligible_models=None):
 
 def preview_batches(db, config, *, limit=None):
     """Pure selection. Partition caps refer to this campaign's outstanding jobs."""
+    for pool in config["pools"]:
+        validated_gpu_request(pool)
     maximum = config.get("max_outstanding", 256)
     active = [dict(r) for r in db.execute("SELECT * FROM batches WHERE state NOT IN ('TERMINAL','REJECTED')")]
     remaining_slots = max(0, maximum - len(active))
@@ -143,7 +147,7 @@ def preview_batches(db, config, *, limit=None):
                 actual_wall = min(wall, max(pool.get("min_walltime_seconds", 600), math.ceil(expected / 60) * 60))
                 bid = "b-" + uuid.uuid4().hex[:16]
                 spec = {"batch_id": bid, "pool_id": pool["id"], "tasks": [t for _, t in selected],
-                        "partition": pool["partition"], "account": pool.get("account"), "gres": pool.get("gres"),
+                        "partition": pool["partition"], "account": pool.get("account"), "gres": validated_gpu_request(pool),
                         "gpus": gpus, "cpus": pool.get("cpus", 2), "allowed_models": models,
                         "memory_gib": memory, "memory_decision": basis, "walltime_seconds": actual_wall,
                         "reserve_seconds": pool.get("reserve_seconds", 120), "config_digest": digest(config),

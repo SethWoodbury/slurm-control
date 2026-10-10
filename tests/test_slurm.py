@@ -5,7 +5,7 @@ import getpass
 
 import pytest
 
-from slurm_control.slurm import Slurm, SlurmSubmissionRejected
+from slurm_control.slurm import Slurm, SlurmSubmissionRejected, validated_gpu_request
 
 
 def reply(stdout="", stderr="", returncode=0):
@@ -71,3 +71,40 @@ def test_nonempty_wrong_comment_is_not_hidden_and_wrong_owner_refused():
         Slurm(runner=lambda *a, **kw: reply(wrong)).accounting(["123"])
     missing = "123|COMPLETED|2||sc-exact-token||\n"
     assert Slurm(runner=lambda *a, **kw: reply(missing)).accounting(["123"])["123"]["token"] == ""
+
+
+@pytest.mark.parametrize("spec", [
+    {"gpus": 0, "gres": "gpu:1"},
+    {"gpus": 0, "gres": "gpu:large:1"},
+    {"gpus": 1, "gres": "gpu:large:2"},
+    {"gpus": 1, "gres": "gpu:1,gpu:1"},
+    {"gpus": 1, "gres": "gpu:large"},
+    {"gpus": 1, "gres": "gpu:1,nvme:1"},
+    {"gpus": 2}, {"gpus": True}, {"gpus": 1.0},
+])
+def test_gpu_count_gres_mismatch_rejected_before_scheduler_call(spec):
+    calls = []
+    scheduler = Slurm(runner=lambda *a, **kw: calls.append(a))
+    with pytest.raises(ValueError):
+        scheduler.submit(spec, Path("worker.sh"), "token", Path("logs"))
+    assert calls == []
+
+
+@pytest.mark.parametrize("spec,expected", [
+    ({"gpus": 0}, None), ({"gpus": 0, "gres": ""}, None),
+    ({"gpus": 1}, "gpu:1"), ({}, "gpu:1"),
+    ({"gpus": 1, "gres": "gpu:1"}, "gpu:1"),
+    ({"gpus": 1, "gres": "gpu:large:1"}, "gpu:large:1"),
+])
+def test_unambiguous_gpu_request_syntax(spec, expected):
+    assert validated_gpu_request(spec) == expected
+
+
+def test_missing_gpu_gres_submits_exactly_one_gpu():
+    calls = []
+    def runner(argv, **kwargs):
+        calls.append(argv)
+        return reply("123\n")
+    spec = {"walltime_seconds": 600, "partition": "gpu", "cpus": 1, "memory_gib": 2, "gpus": 1}
+    assert Slurm(runner=runner).submit(spec, Path("worker.sh"), "token", Path("logs")) == "123"
+    assert calls[0][calls[0].index("--gres") + 1] == "gpu:1"

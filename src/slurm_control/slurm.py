@@ -12,6 +12,28 @@ class SlurmSubmissionRejected(RuntimeError):
     """The server explicitly refused sbatch; no allocation was accepted."""
 
 
+def validated_gpu_request(spec):
+    """Return an unambiguous GRES request consistent with GPU-hour accounting.
+
+    Version 0.1 supports CPU without GRES, or exactly one GPU. Missing GPU GRES
+    defaults to ``gpu:1``. Additional/multiple resources need a separate adapter
+    that accounts for them rather than silently trusting a conflicting string.
+    """
+    count = spec.get("gpus", 1)
+    if isinstance(count, bool) or not isinstance(count, int) or count not in (0, 1):
+        raise ValueError("gpus must be integer 0 (CPU) or 1 (one GPU)")
+    gres = spec.get("gres")
+    if count == 0:
+        if gres not in (None, ""):
+            raise ValueError("CPU allocations cannot request GRES")
+        return None
+    if gres in (None, ""):
+        return "gpu:1"
+    if not isinstance(gres, str) or not re.fullmatch(r"gpu:(?:[A-Za-z0-9_.-]+:)?1", gres):
+        raise ValueError("Single-GPU GRES must be gpu:1 or gpu:<class>:1")
+    return gres
+
+
 class Slurm:
     def __init__(self, timeout=30, runner=None):
         self.timeout = timeout
@@ -27,6 +49,7 @@ class Slurm:
         return result.stdout
 
     def submit(self, spec, script, token, logdir):
+        gres = validated_gpu_request(spec)
         seconds = int(spec["walltime_seconds"])
         argv = ["sbatch", "--parsable", "--job-name", token, "--comment", token,
                 "--partition", spec["partition"], "--nodes", "1", "--ntasks", "1",
@@ -36,8 +59,8 @@ class Slurm:
                 "--output", str(logdir / "slurm-%j.out"), "--error", str(logdir / "slurm-%j.err")]
         if spec.get("account"):
             argv.extend(["--account", spec["account"]])
-        if spec.get("gres"):
-            argv.extend(["--gres", spec["gres"]])
+        if gres:
+            argv.extend(["--gres", gres])
         if spec.get("allowed_models") and spec.get("gpus", 1):
             # These are trusted cluster feature names, not user commands.
             if any(not re.fullmatch(r"[A-Za-z0-9_.-]+", x) for x in spec["allowed_models"]):

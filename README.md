@@ -34,7 +34,8 @@ the comparison with existing open-source tools.
 - **Adaptation:** resource changes use completed cohorts (default 256 independent
   allocations, configurable for pilots), with missing evidence explicitly shown.
 - **Overrides:** fixed RAM requests, pool limits, walltime, model allowlists,
-  holds and retries are visible controls. Overrides require reasons; uncertainty
+  holds and retries are visible controls. CLI overrides and fixed RAM requests
+  require reasons; ordinary pool settings are recorded in the configuration. Uncertainty
   about a submitted job never authorizes a duplicate submission.
 
 The [resource policy](docs/resource-policy.md) defines measurement comparability,
@@ -112,7 +113,11 @@ scope of the real CPU/GPU smoke tests.
 python -m pytest -q
 ```
 
-Version 0.1 supports CPU or single-GPU command allocations. It is infrastructure,
+Version 0.1 supports CPU or single-NVIDIA-GPU command allocations; GPU binding
+requires the CUDA driver. CPU pools use `gpus: 0` and no GRES. GPU pools use
+`gpus: 1` (the default) with `gpu:1` or `gpu:<class>:1`; omitted GPU GRES defaults
+to `gpu:1`. Conflicting counts and multiple GRES requests are rejected before
+submission so GPU-hour accounting matches the requested resource. It is infrastructure,
 not a chemistry or protein-design workflow engine. AF3 reuse, scientific filters,
 candidate publication and application checkpointing belong in campaign adapters.
 When adopting an existing campaign, keep a single authoritative ledger and never

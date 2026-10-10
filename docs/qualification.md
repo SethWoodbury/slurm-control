@@ -1,9 +1,10 @@
 # Initial qualification
 
-The initial release passed **64 automated tests** on 2026-10-10 UTC.
+The initial release passed **82 automated tests** on 2026-10-10 UTC.
 They cover resource comparability, additive memory decisions, deadline packing,
 budget reservations, duplicate prevention, submission ambiguity and rejection,
-partial completion recovery, scheduler accounting, and worker failure handling.
+partial completion recovery, scheduler accounting, consistent GPU requests and
+budget reservations, and worker failure handling.
 
 Two small jobs also completed on a real Slurm cluster:
 
