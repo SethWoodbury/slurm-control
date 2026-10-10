@@ -1,0 +1,40 @@
+{
+  "campaign_id": "cpu-example",
+  "state": "/net/scratch/${USER}/slurm-control/cpu-example",
+  "tasks_path": "cpu_tasks.json",
+  "worker_python": "/usr/bin/python3",
+  "budget_gpu_hours": 1,
+  "max_outstanding": 2,
+  "max_admissions_per_tick": 1,
+  "max_attempts": 3,
+  "workloads": {
+    "cpu-example:v1": {
+      "memory_gib": 1,
+      "min_memory_gib": 1,
+      "max_memory_gib": 8,
+      "memory_margin_gib": 2,
+      "adapt_every": 256,
+      "oom_step_gib": 2,
+      "allowed_models": [
+        "cpu"
+      ]
+    }
+  },
+  "pools": [
+    {
+      "id": "cpu",
+      "partition": "cpu-bf",
+      "account": "ipd",
+      "gpus": 0,
+      "cpus": 1,
+      "allowed_models": [
+        "cpu"
+      ],
+      "walltime_seconds": 600,
+      "min_walltime_seconds": 600,
+      "startup_seconds": 10,
+      "reserve_seconds": 120,
+      "max_outstanding": 2
+    }
+  ]
+}

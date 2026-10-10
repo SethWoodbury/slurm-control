@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "slurm-control"
+version = "0.1.0"
+description = "Small, auditable Slurm command campaigns with measured resource policies"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/SethWoodbury/slurm-control"
+Issues = "https://github.com/SethWoodbury/slurm-control/issues"
+
+[project.scripts]
+slurm-control = "slurm_control.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-p no:cacheprovider"

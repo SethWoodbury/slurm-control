@@ -1,0 +1,4 @@
+[
+  {"task_id": "example-001", "workload_key": "cpu-example:v1", "argv": ["python3", "-c", "print('first command complete')"], "runtime_estimates": {"cpu": 2}, "fallback_seconds": 5},
+  {"task_id": "example-002", "workload_key": "cpu-example:v1", "argv": ["python3", "-c", "print('second command complete')"], "runtime_estimates": {"cpu": 2}, "fallback_seconds": 5}
+]

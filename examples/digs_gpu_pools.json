@@ -1,0 +1,9 @@
+{
+  "note": "Illustrative DIGS cluster pool definitions, not a portable cluster inventory or a runtime compatibility certificate. Replace the account, partitions, GRES classes, model allowlists and limits for your site and tested workload. These entries do not submit anything. Memory and timing belong to workload settings and measured task estimates, not partition names.",
+  "pools": [
+    {"id": "gpu-small", "partition": "gpu", "account": "ipd", "gres": "gpu:small:1", "gpus": 1, "cpus": 2, "allowed_models": ["A4000", "4000Ada", "B4000"], "walltime_seconds": 28800, "max_outstanding": 128},
+    {"id": "gpu-large", "partition": "gpu", "account": "ipd", "gres": "gpu:large:1", "gpus": 1, "cpus": 2, "allowed_models": ["A6000", "B6000Q"], "walltime_seconds": 28800, "max_outstanding": 128},
+    {"id": "gpu-bf", "partition": "gpu-bf", "account": "ipd", "gres": "gpu:1", "gpus": 1, "cpus": 2, "allowed_models": ["A4000", "4000Ada", "B4000", "A6000", "B6000Q", "A100", "L40"], "walltime_seconds": 28800, "max_outstanding": 256},
+    {"id": "gpu-train", "partition": "gpu-train", "account": "ipd", "gres": "gpu:large:1", "gpus": 1, "cpus": 2, "allowed_models": ["A100", "L40"], "walltime_seconds": 43200, "min_walltime_seconds": 36000, "max_outstanding": 6}
+  ]
+}
